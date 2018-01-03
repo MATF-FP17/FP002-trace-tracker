@@ -7,6 +7,7 @@ width, height, offset :: Int
 width = 600
 height = 600
 offset = 100
+traceLine = []
 
 fps :: Int
 fps = 60
@@ -18,32 +19,44 @@ background :: Color
 background = black
 
 data DrawMode = Mode {
-    pos :: (Float, Float),
-    direction :: Char
+    pointA :: (Float, Float),
+    pointB :: (Float, Float)
 } deriving Show
+
+direction :: String -> Char
+direction [] = 'F'
+direction (x:xs) = x  
 
 initialState :: DrawMode
 initialState = Mode {
-    pos = (0, 0),
-    direction = 'R'
+    pointA = (0, 0),
+    pointB = (0, 0)
 }
 
 render :: DrawMode -> Picture
-render mode = pictures [ball]
+render mode = pictures [trace]
               where
-                ball = color ballColor $ circleSolid 10
+                trace = color ballColor $ Line [pointA mode, pointB mode]
                 ballColor = dark red
+
+moveLine :: Float -> DrawMode -> DrawMode
+moveLine sec mode = mode { pointA = pointB mode, pointB = (x, y)} 
+   where
+    dir = direction traceLine
+    (x, y) = if dir == 'U'
+             then (fst $ pointB mode, snd $ pointB mode + 25) 
+             else if dir == 'D'
+                  then (fst $ pointB mode, snd $ pointB mode - 25) 
+             else if dir == 'R'
+                  then (fst $ pointB mode + 25, snd $ pointB mode)
+             else (fst $ pointB mode - 25, snd $ pointB mode)
+
+     
 
 update :: ViewPort -> Float -> DrawMode -> DrawMode
-update _ 100 initialState = initialState
+update _ = moveLine
 
-drawing :: Picture
-drawing = pictures [ball, wall]
-              where
-                ball = color ballColor $ circleSolid 10               
-                wall = color ballColor $ rectangleWire 400 400
-                ballColor = dark red
-                
+            
 checkString :: String -> Bool
 checkString [] = True
 checkString (x:xs) = if x == 'U' || x == 'D' || x == 'R' || x == 'L'
@@ -53,10 +66,9 @@ checkString (x:xs) = if x == 'U' || x == 'D' || x == 'R' || x == 'L'
 main :: IO ()
 main = do  
     putStrLn "Unesite nisku za iscrtavanje:"  
-    line <- getLine  
-    if null line
+    traceLine <- getLine  
+    if null traceLine
     then putStrLn "Trazi se niska oblika UDLR (U-up, D-down, L-left, R-right)" 
-    else if checkString line
-        then display window background drawing
+    else if checkString traceLine
+        then simulate window background fps initialState render update
         else putStrLn "Neispravna niska. Pokusajte ponovo"
---main = simulate window background fps initialState render update
