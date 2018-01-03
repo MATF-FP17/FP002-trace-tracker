@@ -43,7 +43,20 @@ drawing = pictures [ball, wall]
                 ball = color ballColor $ circleSolid 10               
                 wall = color ballColor $ rectangleWire 400 400
                 ballColor = dark red
-
+                
+checkString :: String -> Bool
+checkString [] = True
+checkString (x:xs) = if x == 'U' || x == 'D' || x == 'R' || x == 'L'
+                   then checkString xs 
+                   else False    
+                
 main :: IO ()
-main = display window background drawing
+main = do  
+    putStrLn "Unesite nisku za iscrtavanje:"  
+    line <- getLine  
+    if null line
+    then putStrLn "Trazi se niska oblika UDLR (U-up, D-down, L-left, R-right)" 
+    else if checkString line
+        then display window background drawing
+        else putStrLn "Neispravna niska. Pokusajte ponovo"
 --main = simulate window background fps initialState render update
