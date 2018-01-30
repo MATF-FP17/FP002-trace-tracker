@@ -47,14 +47,22 @@ initialState traceLine = Mode {
 }
 
 --funkcija koja vrsi iscrtavanje liste tacaka koje su do sad obradjene (dots)
-render :: DrawMode -> Picture
-render mode = pictures [trace, pointer]
+render :: String -> DrawMode -> Picture
+render option mode = pictures picArray
               where
-                trace = color lineColor $ Line $ dots mode
-                pointer = translate (fst $ pointB mode) (snd $ pointB mode) $ color ballColor $ circleSolid 4
+                picArray = case option of "0" -> [trace1, pointer1]
+                                          "2" -> [trace1, trace3, pointer1, pointer3]
+                                          "4" -> [trace1, trace2, trace3, trace4, pointer1, pointer2, pointer3, pointer4]
+                trace1 = color lineColor $ Line $ dots mode
+                trace2 =  rotate (90) $ trace1
+                trace3 =  rotate (180) $ trace1 
+                trace4 =  rotate (270) $ trace1 
+                pointer1 = translate (fst $ pointB mode) (snd $ pointB mode) $ color ballColor $ circleSolid 4
+                pointer2 = rotate (90) $ pointer1
+                pointer3 = rotate (180) $ pointer1
+                pointer4 = rotate (270) $ pointer1
                 lineColor = dark $ dark green
                 ballColor = dark red
-               
 
 --funkcija koja vrsi izracunavanje koordinata nove linije
 moveLine :: Float -> Float -> DrawMode -> DrawMode
@@ -86,14 +94,16 @@ checkString (x:xs) = if x == 'U' || x == 'D' || x == 'R' || x == 'L'
                      else False    
 
 --pomocni poziv koji prima dodatni argument koji sluzi za prosledjivanje nase niske
-callSim traceLine lSize = simulate window background fps (initialState traceLine) render (update lSize)                    
+callSim traceLine lSize option = simulate window background fps (initialState traceLine) (render option) (update lSize)                    
 
 main :: IO ()
 main = do 
     putStrLn "Odaberite velicinu koraka (S-standardni, L-manji, G-veci):"
     lineSize <- getLine
     putStrLn "Unesite nisku za iscrtavanje:"  
-    traceLine <- getLine 
+    traceLine <- getLine
+    putStrLn "Da li zelite sliku zarotiranu 0, 2 ili 4 puta?"
+    option <- getLine
     let lSize = if (lineSize == "L") 
                 then 12.5 
                 else if (lineSize == "G") 
@@ -101,5 +111,6 @@ main = do
                      else 25.0                   
     if null traceLine
     then putStrLn "Trazi se niska oblika UDLR (U-up, D-down, L-left, R-right)" 
-    else if checkString traceLine then callSim traceLine lSize
-                                  else putStrLn "Neispravna niska. Pokusajte ponovo."
+    else if checkString traceLine 
+         then callSim traceLine lSize option
+         else putStrLn "Neispravna niska. Pokusajte ponovo."
